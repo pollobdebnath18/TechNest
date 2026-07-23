@@ -1,3 +1,4 @@
+console.log("🚀 THIS IS SERVER.JS");
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
@@ -13,6 +14,10 @@ let db;
 
 app.get("/", (req, res) => {
   res.send("TechNest API is running");
+});
+
+app.get("/test", (req, res) => {
+  res.send("THIS IS MY CURRENT SERVER");
 });
 
 async function connectDB() {
@@ -64,6 +69,55 @@ app.get("/api/products/:slug", async (req, res) => {
       .findOne({ slug: req.params.slug });
     if (!product) return res.status(404).json({ message: "Product not found" });
     res.json(product);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// --- Create Product ---
+app.post("/api/products", async (req, res) => {
+  try {
+    const product = {
+      ...req.body,
+      createdAt: new Date(),
+    };
+    if (!product.slug) {
+      product.slug = product.name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)/g, "");
+    }
+    const result = await db.collection("products").insertOne(product);
+    res.status(201).json({ _id: result.insertedId, ...product });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// --- Update Product ---
+app.put("/api/products/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!req.body || Object.keys(req.body).length === 0) {
+      return res.status(400).json({ message: "Request body is empty" });
+    }
+
+    const updates = { ...req.body, updatedAt: new Date() };
+    delete updates._id;
+
+    const result = await db
+      .collection("products")
+      .findOneAndUpdate(
+        { _id: new ObjectId(id) },
+        { $set: updates },
+        { returnDocument: "after" },
+      );
+
+    if (!result || !result.value) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    res.json(result.value);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -154,10 +208,20 @@ app.get("/api/orders", async (req, res) => {
 
 // --- Seed data endpoint (dev only) ---
 app.post("/api/seed", async (_req, res) => {
+  console.log("===== NEW SEED ROUTE =====");
   try {
-    const count = await db.collection("products").countDocuments();
-    if (count > 0) {
-      return res.json({ message: "Database already seeded" });
+    const collections = [
+      "products",
+      "categories",
+      "brands",
+      "testimonials",
+      "features",
+    ];
+    for (const name of collections) {
+      await db
+        .collection(name)
+        .drop()
+        .catch(() => {});
     }
 
     await db.collection("categories").insertMany([
@@ -170,43 +234,43 @@ app.post("/api/seed", async (_req, res) => {
       {
         name: "Laptops",
         slug: "laptops",
-        image: "/categories/laptops.jpg",
+        image: "https://i.ibb.co.com/w2c3kg3/lap1.jpg",
         productCount: 89,
       },
       {
         name: "Headphones",
         slug: "headphones",
-        image: "/categories/headphones.jpg",
+        image: "https://i.ibb.co.com/7NL0xj81/1.jpg",
         productCount: 67,
       },
       {
         name: "Wearables",
         slug: "wearables",
-        image: "/categories/wearables.jpg",
+        image: "https://i.ibb.co.com/Fqsx14kb/2.jpg",
         productCount: 45,
       },
       {
         name: "Tablets",
         slug: "tablets",
-        image: "/categories/tablets.jpg",
+        image: "https://i.ibb.co.com/KjwyLdtV/3.webp",
         productCount: 53,
       },
       {
         name: "Cameras",
         slug: "cameras",
-        image: "/categories/cameras.jpg",
+        image: "https://i.ibb.co.com/Qv9Tv0rP/4.jpg",
         productCount: 38,
       },
       {
         name: "Audio",
         slug: "audio",
-        image: "/categories/audio.jpg",
+        image: "https://i.ibb.co.com/8gvjnj89/5.jpg",
         productCount: 72,
       },
       {
         name: "Gaming",
         slug: "gaming",
-        image: "/categories/gaming.jpg",
+        image: "https://i.ibb.co.com/pjfkMd5p/6.jpg",
         productCount: 91,
       },
     ]);
@@ -231,7 +295,7 @@ app.post("/api/seed", async (_req, res) => {
         slug: "samsung-galaxy-s24-ultra",
         price: 1099,
         originalPrice: 1299,
-        image: "/products/galaxy-s24.jpg",
+        image: "https://i.ibb.co.com/v4vp0kkX/phn2.webp",
         category: "smartphones",
         brand: "Samsung",
         rating: 4.7,
@@ -245,7 +309,7 @@ app.post("/api/seed", async (_req, res) => {
         slug: "macbook-pro-16-m3-max",
         price: 2499,
         originalPrice: null,
-        image: "/products/macbook-pro.jpg",
+        image: "https://i.ibb.co.com/5NSCNYG/phn3.jpg",
         category: "laptops",
         brand: "Apple",
         rating: 4.9,
@@ -259,7 +323,7 @@ app.post("/api/seed", async (_req, res) => {
         slug: "sony-wh-1000xm5",
         price: 349,
         originalPrice: 399,
-        image: "/products/sony-xm5.jpg",
+        image: "https://i.ibb.co.com/TDCbckxj/phn4.jpg",
         category: "headphones",
         brand: "Sony",
         rating: 4.8,
@@ -273,7 +337,7 @@ app.post("/api/seed", async (_req, res) => {
         slug: "apple-watch-series-9",
         price: 399,
         originalPrice: null,
-        image: "/products/apple-watch.jpg",
+        image: "https://i.ibb.co.com/qMQk3sB6/phn5.webp",
         category: "wearables",
         brand: "Apple",
         rating: 4.7,
@@ -287,7 +351,7 @@ app.post("/api/seed", async (_req, res) => {
         slug: "ipad-pro-129-m2",
         price: 1099,
         originalPrice: 1199,
-        image: "/products/ipad-pro.jpg",
+        image: "https://i.ibb.co.com/nN7KXyh2/phn6.webp",
         category: "tablets",
         brand: "Apple",
         rating: 4.8,
@@ -301,7 +365,7 @@ app.post("/api/seed", async (_req, res) => {
         slug: "sony-alpha-a7-iv",
         price: 2498,
         originalPrice: null,
-        image: "/products/sony-a7iv.jpg",
+        image: "https://i.ibb.co.com/2j9NBrFk/sony-a7iv.jpg",
         category: "cameras",
         brand: "Sony",
         rating: 4.9,
@@ -329,7 +393,7 @@ app.post("/api/seed", async (_req, res) => {
         slug: "playstation-5",
         price: 499,
         originalPrice: null,
-        image: "/products/ps5.jpg",
+        image: "https://i.ibb.co.com/CsbgqqGB/phn7.jpg",
         category: "gaming",
         brand: "Sony",
         rating: 4.8,
@@ -343,7 +407,7 @@ app.post("/api/seed", async (_req, res) => {
         slug: "dell-xps-15",
         price: 1799,
         originalPrice: 1999,
-        image: "/products/dell-xps.jpg",
+        image: "https://i.ibb.co.com/kgLkq4bc/phn8.jpg",
         category: "laptops",
         brand: "Dell",
         rating: 4.6,
@@ -357,7 +421,7 @@ app.post("/api/seed", async (_req, res) => {
         slug: "samsung-galaxy-watch-6",
         price: 299,
         originalPrice: 329,
-        image: "/products/galaxy-watch.jpg",
+        image: "https://i.ibb.co.com/whr4fQkP/phn9.jpg",
         category: "wearables",
         brand: "Samsung",
         rating: 4.5,
@@ -371,7 +435,7 @@ app.post("/api/seed", async (_req, res) => {
         slug: "jbl-charge-5",
         price: 179,
         originalPrice: null,
-        image: "/products/jbl-charge.jpg",
+        image: "https://i.ibb.co.com/tMTHGHJn/phn10.jpg",
         category: "audio",
         brand: "JBL",
         rating: 4.7,
@@ -383,14 +447,46 @@ app.post("/api/seed", async (_req, res) => {
     ]);
 
     await db.collection("brands").insertMany([
-      { name: "Apple", slug: "apple", logo: "/brands/apple.svg" },
-      { name: "Samsung", slug: "samsung", logo: "/brands/samsung.svg" },
-      { name: "Sony", slug: "sony", logo: "/brands/sony.svg" },
-      { name: "Google", slug: "google", logo: "/brands/google.svg" },
-      { name: "Dell", slug: "dell", logo: "/brands/dell.svg" },
-      { name: "JBL", slug: "jbl", logo: "/brands/jbl.svg" },
-      { name: "Logitech", slug: "logitech", logo: "/brands/logitech.svg" },
-      { name: "Microsoft", slug: "microsoft", logo: "/brands/microsoft.svg" },
+      {
+        name: "Apple",
+        slug: "apple",
+        logo: "https://i.ibb.co.com/mFrFtRKM/11.jpg",
+      },
+      {
+        name: "Samsung",
+        slug: "samsung",
+        logo: "https://i.ibb.co.com/6GKw80Y/12.jpg",
+      },
+      {
+        name: "Sony",
+        slug: "sony",
+        logo: "https://i.ibb.co.com/cdmXtH1/14.jpg",
+      },
+      {
+        name: "Google",
+        slug: "google",
+        logo: "https://i.ibb.co.com/TDY9H84T/google.avif",
+      },
+      {
+        name: "Dell",
+        slug: "dell",
+        logo: "https://i.ibb.co.com/VWP4Gpv5/dell.jpg",
+      },
+      {
+        name: "JBL",
+        slug: "jbl",
+        logo: "https://i.ibb.co.com/YTKM6rDR/jbl.jpg",
+      },
+      {
+        name: "Logitech",
+        slug: "logitech",
+        logo: "https://i.ibb.co.com/Mk11pQXq/ogi.webp",
+      },
+      {
+        name: "Microsoft",
+        slug: "microsoft",
+        logo: "https://i.ibb.co.com/Dfj87cYD/images-q-tbn-ANd9-Gc-Rik-GFJR-a0827-Pjl-HAYz5-Afmo-7-FYLw2-JY-2w07-Vf-IYA-s-10.png",
+      },
     ]);
 
     await db.collection("testimonials").insertMany([
@@ -442,6 +538,28 @@ app.post("/api/seed", async (_req, res) => {
     ]);
 
     res.json({ message: "Database seeded successfully" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.put("/api/categories/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!req.body || Object.keys(req.body).length === 0) {
+      return res.status(400).json({ message: "Request body is empty" });
+    }
+
+    const result = await db.collection("categories").updateOne(
+      { _id: new ObjectId(id) },
+      { $set: req.body },
+    );
+
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ message: "Category not found" });
+    }
+
+    res.json(result);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
