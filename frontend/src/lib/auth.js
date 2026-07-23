@@ -2,8 +2,16 @@ import { betterAuth } from "better-auth";
 import { mongodbAdapter } from "better-auth/adapters/mongodb";
 import { MongoClient } from "mongodb";
 
-const client = new MongoClient(process.env.MONGODB_URI);
+const uri = process.env.MONGODB_URI || process.env.NEXT_PUBLIC_AUTH_MONGODB_URI;
+if (!uri) {
+  throw new Error("MONGODB_URI is required for Better Auth. Add it to Vercel env vars.");
+}
+const client = new MongoClient(uri);
 const db = client.db("TechNest");
+
+const frontendUrl = process.env.NEXT_PUBLIC_VERCEL_URL
+  ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
+  : process.env.FRONTEND_URL || "http://localhost:3000";
 
 export const auth = betterAuth({
   database: mongodbAdapter(db, { client }),
@@ -14,5 +22,5 @@ export const auth = betterAuth({
     expiresIn: 60 * 60 * 24 * 7,
     updateAge: 60 * 60 * 24,
   },
-  trustedOrigins: ["http://localhost:3000"],
+  trustedOrigins: [frontendUrl],
 });
