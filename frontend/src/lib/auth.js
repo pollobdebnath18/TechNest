@@ -11,7 +11,7 @@ const db = client.db("TechNest");
 
 const frontendUrl = process.env.NEXT_PUBLIC_VERCEL_URL
   ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
-  : process.env.FRONTEND_URL || "http://localhost:3000";
+  : process.env.FRONTEND_URL;
 
 export const auth = betterAuth({
   database: mongodbAdapter(db, { client }),
