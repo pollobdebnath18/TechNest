@@ -12,17 +12,11 @@ const shopLinks = [
 
 const supportLinks = [
   { href: "/contact", label: "Contact Us" },
-  { href: "/faq", label: "FAQ" },
-  { href: "/shipping", label: "Shipping Info" },
-  { href: "/returns", label: "Returns & Refunds" },
-  { href: "/warranty", label: "Warranty" },
+  { href: "/shop", label: "Help Center" },
 ];
 
 const companyLinks = [
   { href: "/about", label: "About TechNest" },
-  { href: "/careers", label: "Careers" },
-  { href: "/press", label: "Press" },
-  { href: "/blog", label: "Blog" },
 ];
 
 const socialLinks = [

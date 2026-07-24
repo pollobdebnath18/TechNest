@@ -166,14 +166,11 @@ export default function LoginPage() {
               </div>
               {errors.password && <p className="mt-1 text-xs text-red-500">{errors.password}</p>}
             </div>
-            <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center text-sm">
               <label className="flex items-center gap-2">
                 <input type="checkbox" className="rounded border-border accent-accent" />
                 <span className="text-muted">Remember me</span>
               </label>
-              <Link href="/forgot-password" className="font-medium text-accent hover:text-accent-hover">
-                Forgot password?
-              </Link>
             </div>
             <button
               type="submit"
