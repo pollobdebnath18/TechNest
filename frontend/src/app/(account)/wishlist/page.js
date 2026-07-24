@@ -1,37 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import ProductCard from "@/components/cards/ProductCard";
 import Button from "@/components/ui/Button";
-
-function getInitialWishlist() {
-  if (typeof window === "undefined") return [];
-  try {
-    return JSON.parse(localStorage.getItem("wishlist") || "[]");
-  } catch {
-    return [];
-  }
-}
+import { useWishlist } from "@/lib/WishlistContext";
 
 export default function WishlistPage() {
-  const [items, setItems] = useState(getInitialWishlist);
-
-  const removeItem = (id) => {
-    setItems((prev) => {
-      const updated = prev.filter((item) => item._id !== id);
-      localStorage.setItem("wishlist", JSON.stringify(updated));
-      return updated;
-    });
-  };
+  const { items, removeItem } = useWishlist();
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mb-8"
-      >
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
         <h1 className="text-3xl font-bold tracking-tight text-primary">My Wishlist</h1>
         <p className="mt-2 text-muted">Items you&apos;ve saved for later</p>
       </motion.div>
@@ -66,9 +45,7 @@ export default function WishlistPage() {
           </svg>
           <h3 className="mt-4 text-lg font-semibold text-primary">Your wishlist is empty</h3>
           <p className="mt-2 text-muted">Browse products and save your favorites</p>
-          <Button href="/shop" className="mt-6">
-            Start Shopping
-          </Button>
+          <Button href="/shop" className="mt-6">Start Shopping</Button>
         </div>
       )}
     </div>

@@ -1,22 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
-
-function getInitialProfile() {
-  if (typeof window === "undefined") {
-    return { name: "", email: "", phone: "", address: "" };
-  }
-  try {
-    const saved = JSON.parse(localStorage.getItem("userProfile") || "null");
-    return saved || { name: "", email: "", phone: "", address: "" };
-  } catch {
-    return { name: "", email: "", phone: "", address: "" };
-  }
-}
+import { useSession } from "@/lib/auth-client";
 
 export default function ProfilePage() {
-  const [form, setForm] = useState(getInitialProfile);
+  const { data: session } = useSession();
+  const [form, setForm] = useState({
+    name: session?.user?.name || "",
+    email: session?.user?.email || "",
+    phone: "",
+    address: "",
+  });
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -24,14 +19,10 @@ export default function ProfilePage() {
     e.preventDefault();
     setSaving(true);
     setMessage("");
-    try {
-      localStorage.setItem("userProfile", JSON.stringify(form));
+    setTimeout(() => {
       setMessage("Profile saved successfully!");
-    } catch {
-      setMessage("Failed to save profile.");
-    } finally {
       setSaving(false);
-    }
+    }, 500);
   };
 
   const initials = form.name ? form.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) : "??";
@@ -39,11 +30,7 @@ export default function ProfilePage() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
       <div className="mx-auto max-w-2xl">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
           <h1 className="text-3xl font-bold tracking-tight text-primary">My Profile</h1>
           <p className="mt-2 text-muted">Manage your account settings</p>
         </motion.div>

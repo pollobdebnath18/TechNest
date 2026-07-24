@@ -1,59 +1,58 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import Button from "@/components/ui/Button";
-
-function getInitialCart() {
-  if (typeof window === "undefined") return [];
-  try {
-    return JSON.parse(localStorage.getItem("cart") || "[]");
-  } catch {
-    return [];
-  }
-}
+import { useCart } from "@/lib/CartContext";
+import { useSession } from "@/lib/auth-client";
+import { createOrder } from "@/lib/api";
 
 export default function CartPage() {
-  const [cartItems, setCartItems] = useState(getInitialCart);
+  const { items, removeItem, updateQuantity, count, clearCart } = useCart();
+  const { data: session } = useSession();
+  const router = useRouter();
+  const [checkingOut, setCheckingOut] = useState(false);
 
-  const updateQuantity = (id, delta) => {
-    setCartItems((prev) => {
-      const updated = prev.map((item) =>
-        item._id === id ? { ...item, quantity: Math.max(1, item.quantity + delta) } : item
-      );
-      localStorage.setItem("cart", JSON.stringify(updated));
-      return updated;
-    });
-  };
-
-  const removeItem = (id) => {
-    setCartItems((prev) => {
-      const updated = prev.filter((item) => item._id !== id);
-      localStorage.setItem("cart", JSON.stringify(updated));
-      return updated;
-    });
-  };
-
-  const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const shipping = subtotal > 50 ? 0 : 9.99;
   const total = subtotal + shipping;
 
+  const handleCheckout = async () => {
+    if (!session?.user?.id || items.length === 0) return;
+    setCheckingOut(true);
+    try {
+      await createOrder({
+        userId: session.user.id,
+        items: items.map((item) => ({
+          productId: item._id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          image: item.image,
+        })),
+        total,
+        status: "Processing",
+      });
+      clearCart();
+      router.push("/orders");
+    } catch {
+      setCheckingOut(false);
+    }
+  };
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mb-8"
-      >
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
         <h1 className="text-3xl font-bold tracking-tight text-primary">Shopping Cart</h1>
-        <p className="mt-2 text-muted">{cartItems.length} items in your cart</p>
+        <p className="mt-2 text-muted">{count} items in your cart</p>
       </motion.div>
 
-      {cartItems.length > 0 ? (
+      {items.length > 0 ? (
         <div className="grid gap-8 lg:grid-cols-3">
           <div className="lg:col-span-2 space-y-4">
-            {cartItems.map((item, i) => (
+            {items.map((item, i) => (
               <motion.div
                 key={item._id}
                 initial={{ opacity: 0, y: 10 }}
@@ -61,10 +60,14 @@ export default function CartPage() {
                 transition={{ duration: 0.3, delay: i * 0.05 }}
                 className="flex gap-4 rounded-xl border border-border bg-white p-4"
               >
-                <div className="flex h-24 w-24 flex-shrink-0 items-center justify-center rounded-lg bg-surface">
-                  <svg className="h-12 w-12 text-muted/20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                  </svg>
+                <div className="flex h-24 w-24 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg bg-surface">
+                  {item.image ? (
+                    <img src={item.image} alt={item.name} className="h-full w-full object-contain p-1" />
+                  ) : (
+                    <svg className="h-12 w-12 text-muted/20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                    </svg>
+                  )}
                 </div>
                 <div className="flex-1">
                   <div className="flex items-start justify-between">
@@ -112,8 +115,13 @@ export default function CartPage() {
                   </div>
                 </div>
               </div>
-              <Button href="/checkout" className="mt-6 w-full" size="lg">
-                Proceed to Checkout
+              <Button
+                className="mt-6 w-full"
+                size="lg"
+                disabled={checkingOut || !session?.user?.id}
+                onClick={handleCheckout}
+              >
+                {checkingOut ? "Processing..." : !session?.user?.id ? "Sign in to Checkout" : "Proceed to Checkout"}
               </Button>
               <Link href="/shop" className="mt-3 block text-center text-sm font-medium text-accent hover:text-accent-hover">
                 Continue Shopping
@@ -128,9 +136,7 @@ export default function CartPage() {
           </svg>
           <h3 className="mt-4 text-lg font-semibold text-primary">Your cart is empty</h3>
           <p className="mt-2 text-muted">Add some products to get started</p>
-          <Button href="/shop" className="mt-6">
-            Start Shopping
-          </Button>
+          <Button href="/shop" className="mt-6">Start Shopping</Button>
         </div>
       )}
     </div>

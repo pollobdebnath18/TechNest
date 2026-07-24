@@ -1,9 +1,13 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { Suspense, useState, useEffect, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
+import { useSearchParams } from "next/navigation";
 import ProductCard from "@/components/cards/ProductCard";
+import SearchBar from "@/components/ui/SearchBar";
 import { getProducts, getCategories } from "@/lib/api";
+
+const PAGE_SIZE = 8;
 
 const sortOptions = [
   { value: "popular", label: "Most Popular" },
@@ -13,18 +17,24 @@ const sortOptions = [
   { value: "rating", label: "Highest Rated" },
 ];
 
-export default function ShopPage() {
-  const [products, setProducts] = useState([]);
+function ShopContent() {
+  const searchParams = useSearchParams();
+  const searchQuery = searchParams.get("q") || "";
+
+  const [allProducts, setAllProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [sortBy, setSortBy] = useState("popular");
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const initialLoad = useRef(true);
+  const loaderRef = useRef(null);
 
   useEffect(() => {
     Promise.all([getProducts(), getCategories()])
       .then(([p, c]) => {
-        setProducts(p);
+        setAllProducts(p);
         setCategories(c);
       })
       .catch(() => {})
@@ -37,14 +47,48 @@ export default function ShopPage() {
       return;
     }
     setLoading(true);
+    setVisibleCount(PAGE_SIZE);
     const params = {};
     if (selectedCategory !== "all") params.category = selectedCategory;
     if (sortBy) params.sort = sortBy;
+    if (searchQuery) params.search = searchQuery;
     getProducts(params)
-      .then(setProducts)
+      .then(setAllProducts)
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [selectedCategory, sortBy]);
+  }, [selectedCategory, sortBy, searchQuery]);
+
+  const filteredProducts = searchQuery
+    ? allProducts.filter((p) =>
+        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.brand?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.description?.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : allProducts;
+
+  const visibleProducts = filteredProducts.slice(0, visibleCount);
+  const hasMore = visibleCount < filteredProducts.length;
+
+  const loadMore = useCallback(() => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    setTimeout(() => {
+      setVisibleCount((prev) => prev + PAGE_SIZE);
+      setLoadingMore(false);
+    }, 400);
+  }, [loadingMore, hasMore]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) loadMore();
+      },
+      { threshold: 0.1 }
+    );
+    const el = loaderRef.current;
+    if (el) observer.observe(el);
+    return () => { if (el) observer.unobserve(el); };
+  }, [loadMore]);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
@@ -56,6 +100,17 @@ export default function ShopPage() {
         <h1 className="text-3xl font-bold tracking-tight text-primary">Shop</h1>
         <p className="mt-2 text-muted">Browse our complete collection of premium tech products.</p>
       </motion.div>
+
+      <div className="mb-6 max-w-md">
+        <SearchBar />
+      </div>
+
+      {searchQuery && (
+        <p className="mb-4 text-sm text-muted">
+          Showing results for &quot;<span className="font-medium text-primary">{searchQuery}</span>&quot;
+          {filteredProducts.length > 0 && ` — ${filteredProducts.length} product${filteredProducts.length !== 1 ? "s" : ""} found`}
+        </p>
+      )}
 
       <div className="mb-6 flex flex-wrap items-center gap-3">
         <button
@@ -84,7 +139,7 @@ export default function ShopPage() {
       </div>
 
       <div className="mb-6 flex items-center justify-between">
-        <p className="text-sm text-muted">{products.length} products</p>
+        <p className="text-sm text-muted">{filteredProducts.length} products</p>
         <select
           value={sortBy}
           onChange={(e) => setSortBy(e.target.value)}
@@ -107,25 +162,70 @@ export default function ShopPage() {
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
-          {products.map((product, i) => (
-            <motion.div
-              key={product._id || product.slug}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: i * 0.03 }}
-            >
-              <ProductCard product={product} />
-            </motion.div>
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
+            {visibleProducts.map((product, i) => (
+              <motion.div
+                key={product._id || product.slug}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: (i % PAGE_SIZE) * 0.03 }}
+              >
+                <ProductCard product={product} />
+              </motion.div>
+            ))}
+          </div>
+
+          {hasMore && (
+            <div ref={loaderRef} className="py-8 text-center">
+              {loadingMore && (
+                <div className="flex items-center justify-center gap-2 text-sm text-muted">
+                  <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  Loading more products...
+                </div>
+              )}
+            </div>
+          )}
+
+          {!hasMore && filteredProducts.length > PAGE_SIZE && (
+            <p className="py-8 text-center text-sm text-muted">All {filteredProducts.length} products loaded</p>
+          )}
+        </>
       )}
 
-      {!loading && products.length === 0 && (
+      {!loading && filteredProducts.length === 0 && (
         <div className="py-20 text-center">
-          <p className="text-lg text-muted">No products found in this category.</p>
+          <p className="text-lg text-muted">No products found{searchQuery ? ` for "${searchQuery}"` : " in this category"}.</p>
         </div>
       )}
     </div>
+  );
+}
+
+export default function ShopPage() {
+  return (
+    <Suspense fallback={
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
+        <div className="mb-8">
+          <div className="h-9 w-32 animate-pulse rounded bg-surface-alt" />
+          <div className="mt-2 h-4 w-64 animate-pulse rounded bg-surface-alt" />
+        </div>
+        <div className="mb-6 h-12 w-full max-w-md animate-pulse rounded-xl bg-surface-alt" />
+        <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="animate-pulse rounded-xl border border-border bg-white p-4">
+              <div className="mb-4 h-48 rounded-lg bg-surface-alt" />
+              <div className="mb-2 h-4 w-3/4 rounded bg-surface-alt" />
+              <div className="h-4 w-1/2 rounded bg-surface-alt" />
+            </div>
+          ))}
+        </div>
+      </div>
+    }>
+      <ShopContent />
+    </Suspense>
   );
 }

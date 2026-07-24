@@ -2,12 +2,13 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL;
 
 async function fetchAPI(endpoint, options = {}) {
   const url = `${API_BASE}${endpoint}`;
+  const { headers: customHeaders, ...fetchOptions } = options;
   const res = await fetch(url, {
+    ...fetchOptions,
     headers: {
       "Content-Type": "application/json",
-      ...options.headers,
+      ...customHeaders,
     },
-    ...options,
   });
 
   if (!res.ok) {
@@ -58,20 +59,28 @@ export async function createOrder(orderData) {
   });
 }
 
-export async function createProduct(productData) {
-  return fetchAPI("/products", {
-    method: "POST",
-    body: JSON.stringify(productData),
-  });
-}
-
-export async function updateProduct(id, productData) {
-  return fetchAPI(`/products/${id}`, {
-    method: "PUT",
-    body: JSON.stringify(productData),
-  });
-}
-
 export async function getOrders(userId) {
   return fetchAPI(`/orders?userId=${userId}`);
+}
+
+export async function getCart(userId) {
+  return fetchAPI(`/cart/${userId}`);
+}
+
+export async function updateCart(userId, items) {
+  return fetchAPI(`/cart/${userId}`, {
+    method: "PUT",
+    body: JSON.stringify({ items }),
+  });
+}
+
+export async function getWishlist(userId) {
+  return fetchAPI(`/wishlist/${userId}`);
+}
+
+export async function updateWishlist(userId, items) {
+  return fetchAPI(`/wishlist/${userId}`, {
+    method: "PUT",
+    body: JSON.stringify({ items }),
+  });
 }

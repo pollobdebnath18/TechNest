@@ -6,6 +6,8 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import Button from "@/components/ui/Button";
 import { getProduct } from "@/lib/api";
+import { useCart } from "@/lib/CartContext";
+import { useWishlist } from "@/lib/WishlistContext";
 
 export default function ProductPage() {
   const params = useParams();
@@ -14,6 +16,10 @@ export default function ProductPage() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [imgError, setImgError] = useState(false);
+  const [addedToCart, setAddedToCart] = useState(false);
+  const [addedToWishlist, setAddedToWishlist] = useState(false);
+  const { addItem: addToCart } = useCart();
+  const { addItem: addToWishlist, items: wishlistItems } = useWishlist();
 
   useEffect(() => {
     getProduct(slug)
@@ -51,6 +57,21 @@ export default function ProductPage() {
   const discount = product.originalPrice
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : 0;
+
+  const isInWishlist = wishlistItems.some((i) => i._id === product._id);
+
+  const handleAddToCart = () => {
+    addToCart(product);
+    setAddedToCart(true);
+    setTimeout(() => setAddedToCart(false), 1500);
+  };
+
+  const handleAddToWishlist = () => {
+    if (isInWishlist) return;
+    addToWishlist(product);
+    setAddedToWishlist(true);
+    setTimeout(() => setAddedToWishlist(false), 1500);
+  };
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
@@ -117,11 +138,24 @@ export default function ProductPage() {
           <p className="mt-6 leading-relaxed text-muted">{product.description}</p>
 
           <div className="mt-8 flex gap-3">
-            <Button size="lg" className="flex-1">Add to Cart</Button>
-            <Button size="lg" variant="outline">
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-              </svg>
+            <Button size="lg" className="flex-1" onClick={handleAddToCart}>
+              {addedToCart ? "Added!" : "Add to Cart"}
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              onClick={handleAddToWishlist}
+              className={isInWishlist ? "border-accent text-accent" : ""}
+            >
+              {isInWishlist ? (
+                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                </svg>
+              ) : (
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                </svg>
+              )}
             </Button>
           </div>
 

@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { getOrders } from "@/lib/api";
+import { useSession } from "@/lib/auth-client";
 
 const statusColors = {
   Delivered: "bg-green-100 text-green-800",
@@ -13,15 +14,27 @@ const statusColors = {
 };
 
 export default function OrdersPage() {
+  const { data: session } = useSession();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const fetchedRef = useRef(null);
 
   useEffect(() => {
-    getOrders()
+    const userId = session?.user?.id;
+    if (!userId) {
+      if (fetchedRef.current !== "none") {
+        setLoading(false);
+        fetchedRef.current = "none";
+      }
+      return;
+    }
+    if (fetchedRef.current === userId) return;
+    fetchedRef.current = userId;
+    getOrders(userId)
       .then(setOrders)
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+  }, [session?.user?.id]);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
