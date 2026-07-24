@@ -25,13 +25,26 @@ export default function ProfilePage() {
     }, 500);
   };
 
-  const initials = form.name ? form.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) : "??";
+  const initials = form.name
+    ? form.name
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2)
+    : "??";
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
       <div className="mx-auto max-w-2xl">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight text-primary">My Profile</h1>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8"
+        >
+          <h1 className="text-3xl font-bold tracking-tight text-primary">
+            My Profile
+          </h1>
           <p className="mt-2 text-muted">Manage your account settings</p>
         </motion.div>
 
@@ -42,19 +55,34 @@ export default function ProfilePage() {
           className="rounded-2xl border border-border bg-white p-6 sm:p-8"
         >
           <div className="mb-6 flex items-center gap-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-accent text-xl font-bold text-white">
-              {initials}
-            </div>
+            {session?.user?.image ? (
+              <img
+                src={session.user.image}
+                alt={form.name || "User"}
+                className="h-16 w-16 rounded-full object-cover ring-4 ring-accent/10"
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-accent to-accent-hover text-xl font-bold text-white ring-4 ring-accent/10">
+                {initials}
+              </div>
+            )}
             <div>
-              <h2 className="text-lg font-semibold text-primary">{form.name || "Your Name"}</h2>
-              <p className="text-sm text-muted">{form.email || "your@email.com"}</p>
+              <h2 className="text-lg font-semibold text-primary">
+                {form.name || "Your Name"}
+              </h2>
+              <p className="text-sm text-muted">
+                {form.email || "your@email.com"}
+              </p>
             </div>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-primary">Full Name</label>
+                <label className="mb-1.5 block text-sm font-medium text-primary">
+                  Full Name
+                </label>
                 <input
                   type="text"
                   value={form.name}
@@ -64,7 +92,9 @@ export default function ProfilePage() {
                 />
               </div>
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-primary">Email</label>
+                <label className="mb-1.5 block text-sm font-medium text-primary">
+                  Email
+                </label>
                 <input
                   type="email"
                   value={form.email}
@@ -75,7 +105,9 @@ export default function ProfilePage() {
               </div>
             </div>
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-primary">Phone</label>
+              <label className="mb-1.5 block text-sm font-medium text-primary">
+                Phone
+              </label>
               <input
                 type="tel"
                 value={form.phone}
@@ -85,7 +117,9 @@ export default function ProfilePage() {
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-primary">Address</label>
+              <label className="mb-1.5 block text-sm font-medium text-primary">
+                Address
+              </label>
               <textarea
                 rows={3}
                 value={form.address}
@@ -96,7 +130,9 @@ export default function ProfilePage() {
             </div>
 
             {message && (
-              <p className={`text-sm font-medium ${message.includes("success") ? "text-green-600" : "text-red-600"}`}>
+              <p
+                className={`text-sm font-medium ${message.includes("success") ? "text-green-600" : "text-red-600"}`}
+              >
                 {message}
               </p>
             )}

@@ -19,9 +19,9 @@ export default function Home() {
       <BestDeals />
       <PopularBrands />
       <Testimonials />
-      <Newsletter />
       <HowItWorks />
       <TechServices />
+      <Newsletter />
     </>
   );
 }

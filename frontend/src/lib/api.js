@@ -84,3 +84,35 @@ export async function updateWishlist(userId, items) {
     body: JSON.stringify({ items }),
   });
 }
+
+export async function getItems(userId) {
+  return fetchAPI(`/items?userId=${userId}`);
+}
+
+export async function getAllItems() {
+  return fetchAPI("/items");
+}
+
+export async function getItem(id) {
+  return fetchAPI(`/items/${id}`);
+}
+
+export async function createItem(itemData) {
+  return fetchAPI("/items", {
+    method: "POST",
+    body: JSON.stringify(itemData),
+  });
+}
+
+export async function updateItem(id, itemData) {
+  return fetchAPI(`/items/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(itemData),
+  });
+}
+
+export async function deleteItem(id) {
+  return fetchAPI(`/items/${id}`, {
+    method: "DELETE",
+  });
+}

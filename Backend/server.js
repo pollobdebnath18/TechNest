@@ -239,6 +239,69 @@ app.put("/api/wishlist/:userId", async (req, res) => {
   }
 });
 
+// --- Items ---
+app.get("/api/items", async (req, res) => {
+  try {
+    const { userId } = req.query;
+    const filter = userId ? { userId } : {};
+    const items = await db.collection("items").find(filter).sort({ createdAt: -1 }).toArray();
+    res.json(items);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.get("/api/items/:id", async (req, res) => {
+  try {
+    const item = await db.collection("items").findOne({ _id: new ObjectId(req.params.id) });
+    if (!item) return res.status(404).json({ message: "Item not found" });
+    res.json(item);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.post("/api/items", async (req, res) => {
+  try {
+    const item = { ...req.body, createdAt: new Date() };
+    const result = await db.collection("items").insertOne(item);
+    res.status(201).json({ _id: result.insertedId, ...item });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.put("/api/items/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!req.body || Object.keys(req.body).length === 0) {
+      return res.status(400).json({ message: "Request body is empty" });
+    }
+    const updates = { ...req.body, updatedAt: new Date() };
+    delete updates._id;
+    const result = await db.collection("items").findOneAndUpdate(
+      { _id: new ObjectId(id) },
+      { $set: updates },
+      { returnDocument: "after" },
+    );
+    if (!result || !result.value) return res.status(404).json({ message: "Item not found" });
+    res.json(result.value);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.delete("/api/items/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await db.collection("items").deleteOne({ _id: new ObjectId(id) });
+    if (result.deletedCount === 0) return res.status(404).json({ message: "Item not found" });
+    res.json({ message: "Item deleted" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 // --- Seed data endpoint (dev only) ---
 app.post("/api/seed", async (_req, res) => {
   try {

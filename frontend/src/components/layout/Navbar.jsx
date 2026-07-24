@@ -20,6 +20,8 @@ const accountLinks = [
   { href: "/cart", label: "Cart", icon: "M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z" },
   { href: "/orders", label: "Orders", icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" },
   { href: "/dashboard", label: "Dashboard", icon: "M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" },
+  { href: "/items/add", label: "Add Item", icon: "M12 4v16m8-8H4" },
+  { href: "/items/manage", label: "Manage Items", icon: "M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" },
 ];
 
 function isActive(pathname, href) {
@@ -101,9 +103,18 @@ export default function Navbar() {
               <button
                 className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-muted transition-colors hover:bg-surface hover:text-primary cursor-pointer"
               >
-                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-accent to-accent-hover text-[11px] font-bold text-white shadow-sm">
-                  {session.user?.name?.charAt(0)?.toUpperCase() || "U"}
-                </div>
+                {session.user?.image ? (
+                  <img
+                    src={session.user.image}
+                    alt={session.user?.name || "User"}
+                    className="h-8 w-8 rounded-full object-cover ring-2 ring-accent/20"
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-accent to-accent-hover text-xs font-bold text-white ring-2 ring-accent/20">
+                    {session.user?.name?.charAt(0)?.toUpperCase() || "U"}
+                  </div>
+                )}
                 <span className="max-w-24 truncate hidden xl:inline">{session.user?.name?.split(" ")[0]}</span>
                 <svg className={`h-4 w-4 transition-transform duration-200 ${profileOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
@@ -111,18 +122,34 @@ export default function Navbar() {
               </button>
 
               {profileOpen && (
-                <div className="absolute right-0 top-full mt-1 w-56 rounded-xl border border-border bg-white py-2 shadow-xl animate-fade-in">
-                  <div className="border-b border-border px-4 py-3">
-                    <p className="text-sm font-semibold text-primary truncate">{session.user?.name || "User"}</p>
-                    <p className="text-xs text-muted truncate">{session.user?.email}</p>
+                <div className="absolute right-0 top-full mt-2 w-64 rounded-2xl border border-border/60 bg-white py-2 shadow-2xl shadow-black/10 animate-fade-in">
+                <div className="border-b border-border/60 px-4 py-3">
+                  <div className="flex items-center gap-3">
+                    {session.user?.image ? (
+                      <img
+                        src={session.user.image}
+                        alt={session.user?.name || "User"}
+                        className="h-10 w-10 rounded-full object-cover ring-2 ring-accent/20"
+                        referrerPolicy="no-referrer"
+                      />
+                    ) : (
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-accent to-accent-hover text-sm font-bold text-white ring-2 ring-accent/20">
+                        {session.user?.name?.charAt(0)?.toUpperCase() || "U"}
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-primary truncate">{session.user?.name || "User"}</p>
+                      <p className="text-xs text-muted truncate">{session.user?.email}</p>
+                    </div>
                   </div>
-                  <div className="py-1">
+                </div>
+                  <div className="py-1.5">
                     {accountLinks.map((link) => (
                       <Link
                         key={link.href}
                         href={link.href}
                         onClick={() => setProfileOpen(false)}
-                        className={`flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${
+                        className={`flex items-center gap-3 mx-2 rounded-xl px-3 py-2.5 text-sm transition-colors ${
                           isActive(pathname, link.href)
                             ? "bg-accent/10 text-accent font-medium"
                             : "text-muted hover:bg-surface hover:text-primary"
@@ -135,10 +162,10 @@ export default function Navbar() {
                       </Link>
                     ))}
                   </div>
-                  <div className="border-t border-border pt-1">
+                  <div className="border-t border-border/60 pt-1.5 mx-2">
                     <button
                       onClick={handleSignOut}
-                      className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-red-500 transition-colors hover:bg-red-50 cursor-pointer"
+                      className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-red-500 transition-colors hover:bg-red-50 cursor-pointer"
                     >
                       <svg className="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />

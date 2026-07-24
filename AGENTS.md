@@ -24,7 +24,7 @@ Two independent apps — **not a monorepo**. No shared tooling, no workspace con
 - Lint rule: `react-hooks/set-state-in-effect` is strict — use `useRef` to avoid re-fetch loops, never call `setState` synchronously inside `useEffect`.
 - Components: reusable cards in `src/components/cards/`, home sections in `src/components/home/`, layout in `src/components/layout/`.
 
-## Backend
+## BackendP
 
 - CommonJS module (`"type": "commonjs"` in `package.json`)
 - Entry: `Backend/server.js`
