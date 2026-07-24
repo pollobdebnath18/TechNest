@@ -102,25 +102,27 @@ cd ../frontend && npm install
 
 ### 2. Configure Environment
 
-Create `Backend/.env`:
+Create `.env` files in both `Backend/` and `frontend/` directories. See the `.env.example` files or set the following variables:
 
-```env
-MONGODB_URI=your_mongodb_atlas_connection_string
-PORT=5000
-FRONTEND_URL=http://localhost:3000,https://tech-nest-kappa.vercel.app
-```
+**Backend** — `Backend/.env`
 
-Create `frontend/.env`:
+| Variable       | Description                          |
+| -------------- | ------------------------------------ |
+| `MONGODB_URI`  | MongoDB connection string            |
+| `PORT`         | Server port (default: `5000`)        |
+| `FRONTEND_URL` | Comma-separated allowed origins      |
 
-```env
-MONGODB_URI=your_mongodb_atlas_connection_string
-BETTER_AUTH_SECRET=your_random_secret
-BETTER_AUTH_URL=http://localhost:3000
-NEXT_PUBLIC_BETTER_AUTH_URL=http://localhost:3000
-NEXT_PUBLIC_API_URL=http://localhost:5000/api
-GOOGLE_CLIENT_ID=your_google_client_id
-GOOGLE_CLIENT_SECRET=your_google_client_secret
-```
+**Frontend** — `frontend/.env`
+
+| Variable                  | Description                          |
+| ------------------------- | ------------------------------------ |
+| `MONGODB_URI`             | MongoDB connection string            |
+| `BETTER_AUTH_SECRET`      | Random secret for session signing    |
+| `BETTER_AUTH_URL`         | Auth base URL                        |
+| `NEXT_PUBLIC_BETTER_AUTH_URL` | Public auth URL                 |
+| `NEXT_PUBLIC_API_URL`     | Backend API URL                      |
+| `GOOGLE_CLIENT_ID`        | Google OAuth client ID               |
+| `GOOGLE_CLIENT_SECRET`    | Google OAuth client secret           |
 
 ### 3. Seed the Database
 
@@ -211,18 +213,7 @@ Base URL: `https://technest-ij5g.onrender.com/api`
 2. Set environment variables in Render dashboard.
 3. Deploy as a **Web Service** with `node server.js` as start command.
 
-### Environment Variables (Production)
-
-| Variable                  | Platform | Description                        |
-| ------------------------- | -------- | ---------------------------------- |
-| `MONGODB_URI`             | Both     | MongoDB Atlas connection string    |
-| `BETTER_AUTH_SECRET`      | Vercel   | Random secret for session signing  |
-| `BETTER_AUTH_URL`         | Vercel   | `https://tech-nest-kappa.vercel.app` |
-| `NEXT_PUBLIC_BETTER_AUTH_URL` | Vercel | Same as above                   |
-| `NEXT_PUBLIC_API_URL`     | Vercel   | `https://technest-ij5g.onrender.com/api` |
-| `GOOGLE_CLIENT_ID`        | Vercel   | Google OAuth client ID             |
-| `GOOGLE_CLIENT_SECRET`    | Vercel   | Google OAuth client secret         |
-| `FRONTEND_URL`            | Render   | `http://localhost:3000,https://tech-nest-kappa.vercel.app` |
+> **Note:** Never commit `.env` files. All sensitive keys are managed via platform dashboards (Vercel / Render).
 
 ## License
 
